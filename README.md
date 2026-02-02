@@ -3,6 +3,10 @@
 **Tikat** is a full-stack MERN (MongoDB, Express, React, Node.js) application that facilitates seamless movie discovery and ticket booking. It features a modern, glassmorphic UI, real-time seat availability, and secure payment integration.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg) ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red.svg) ![Stack](https://img.shields.io/badge/MERN-Full%20Stack-green.svg)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on%20-Vercel-black.svg?style=for-the-badge&logo=vercel)](https://tikat-tau.vercel.app/)
+
+## 🌐 Live Demo
+👉 **[Click here to visit Tikat Live](https://tikat-tau.vercel.app/)**
 
 ---
 

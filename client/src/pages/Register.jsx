@@ -18,7 +18,7 @@ const Register = () => {
             // Redirect to OTP verification instead of home
             navigate('/verify-otp', { state: { email: formData.email } });
         } catch (err) {
-            setError(err.response?.data?.error || err.message || 'Registration failed.');
+            setError(err.response?.data?.message || err.message || 'Registration failed.');
         } finally {
             setIsLoading(false);
         }

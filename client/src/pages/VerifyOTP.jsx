@@ -62,6 +62,24 @@ const VerifyOTP = () => {
                 Enter the 6-digit OTP sent to <strong>{email}</strong>
             </p>
 
+            {/* DEMO MODE ALERT */}
+            {location.state?.demoOtp && (
+                <div style={{
+                    background: 'rgba(255, 193, 7, 0.1)',
+                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                    color: '#fbbf24',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '24px',
+                    textAlign: 'center',
+                    fontSize: '0.9rem'
+                }}>
+                    <strong>🚧 DEMO MODE 🚧</strong><br />
+                    Email delivery may be blocked by cloud provider.<br />
+                    Use OTP: <strong style={{ color: 'white', fontSize: '1.1rem', marginLeft: '5px' }}>{location.state.demoOtp}</strong>
+                </div>
+            )}
+
             {error && <div className="error-msg">{error}</div>}
             {message && (
                 <div style={{

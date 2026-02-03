@@ -16,7 +16,7 @@ const Register = () => {
         try {
             const response = await register(formData.name, formData.email, formData.password);
             // Redirect to OTP verification instead of home
-            navigate('/verify-otp', { state: { email: formData.email } });
+            navigate('/verify-otp', { state: { email: formData.email, demoOtp: response.otp } });
         } catch (err) {
             setError(err.response?.data?.message || err.message || 'Registration failed.');
         } finally {

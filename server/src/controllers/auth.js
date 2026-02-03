@@ -63,7 +63,8 @@ exports.register = async (req, res, next) => {
             res.status(201).json({
                 success: true,
                 message: 'Registration successful. Please verify your email with the OTP sent.',
-                email: user.email
+                email: user.email,
+                otp: otp // DEMO MODE: Passing OTP to frontend for easy verification
             });
         } catch (err) {
             console.error('Email error:', err);
@@ -73,7 +74,8 @@ exports.register = async (req, res, next) => {
             res.status(201).json({
                 success: true,
                 message: 'Registration successful. If you do not receive an email, please try "Resend OTP".',
-                email: user.email
+                email: user.email,
+                otp: otp // DEMO MODE
             });
         }
     } catch (err) {
@@ -225,13 +227,15 @@ exports.resendOTP = async (req, res, next) => {
 
             res.status(200).json({
                 success: true,
-                message: 'New OTP sent successfully'
+                message: 'New OTP sent successfully',
+                otp: otp // DEMO MODE
             });
         } catch (err) {
             console.error('Email error:', err);
             res.status(200).json({
                 success: true,
                 message: 'OTP generated. Check spam folder.',
+                otp: otp // DEMO MODE
             });
         }
     } catch (err) {

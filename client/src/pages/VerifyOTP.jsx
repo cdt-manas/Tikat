@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import api from '../api/axios';
-import { useAuth } from '../context/AuthContext';
 
 const VerifyOTP = () => {
     const [otp, setOtp] = useState('');
@@ -19,22 +19,21 @@ const VerifyOTP = () => {
         setError('');
         setLoading(true);
 
-        console.log('Verifying OTP:', { email, otp });
-
         try {
-            const { data } = await api.post('/auth/verify-otp', { email, otp });
-            console.log('OTP verification success:', data);
+            // Verify OTP with Supabase
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+                email,
+                token: otp,
+                type: 'signup'
+            });
 
-            if (data.token) {
-                await authLogin(data.token);
-                navigate('/');
-            } else {
-                setError('No token received from server');
-            }
+            if (verifyError) throw verifyError;
+
+            // If success, user is logged in automatically by Supabase client
+            navigate('/');
         } catch (err) {
             console.error('OTP verification error:', err);
-            const errorMsg = err.response?.data?.error || err.response?.data?.message || 'OTP verification failed';
-            setError(errorMsg);
+            setError(err.message || 'OTP verification failed');
         } finally {
             setLoading(false);
         }
@@ -46,10 +45,15 @@ const VerifyOTP = () => {
         setLoading(true);
 
         try {
-            await api.post('/auth/resend-otp', { email });
-            setMessage('New OTP sent! Check your email (or server console in dev mode).');
+            const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email
+            });
+
+            if (resendError) throw resendError;
+            setMessage('New OTP sent! Check your email.');
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to resend OTP');
+            setError(err.message || 'Failed to resend OTP');
         } finally {
             setLoading(false);
         }
@@ -62,23 +66,7 @@ const VerifyOTP = () => {
                 Enter the 6-digit OTP sent to <strong>{email}</strong>
             </p>
 
-            {/* DEMO MODE ALERT */}
-            {location.state?.demoOtp && (
-                <div style={{
-                    background: 'rgba(255, 193, 7, 0.1)',
-                    border: '1px solid rgba(255, 193, 7, 0.3)',
-                    color: '#fbbf24',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '24px',
-                    textAlign: 'center',
-                    fontSize: '0.9rem'
-                }}>
-                    <strong>🚧 DEMO MODE 🚧</strong><br />
-                    Email delivery may be blocked by cloud provider.<br />
-                    Use OTP: <strong style={{ color: 'white', fontSize: '1.1rem', marginLeft: '5px' }}>{location.state.demoOtp}</strong>
-                </div>
-            )}
+
 
             {error && <div className="error-msg">{error}</div>}
             {message && (

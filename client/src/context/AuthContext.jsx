@@ -1,63 +1,65 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    // We need to handle navigation inside components or use a different method if outside Router
-    // But here AuthProvider will likely be inside Router
+const [user, setUser] = useState(null);
+const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        checkUserLoggedIn();
-    }, []);
-
-    const checkUserLoggedIn = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const { data } = await api.get('/auth/me');
-                setUser(data.data);
-            } catch (error) {
-                localStorage.removeItem('token');
-                setUser(null);
-            }
-        }
+useEffect(() => {
+    // Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
         setLoading(false);
-    };
+    });
 
-    const login = async (emailOrToken, password) => {
-        // If only one argument and it looks like a token, use it directly
-        if (!password && typeof emailOrToken === 'string' && emailOrToken.length > 50) {
-            localStorage.setItem('token', emailOrToken);
-            await checkUserLoggedIn();
-            return;
-        }
-        // Otherwise it's email/password login
-        const { data } = await api.post('/auth/login', { email: emailOrToken, password });
-        localStorage.setItem('token', data.token);
-        await checkUserLoggedIn();
-    };
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+    });
 
-    const register = async (name, email, password) => {
-        const { data } = await api.post('/auth/register', { name, email, password });
-        // Don't save token yet - user needs to verify OTP first
-        return data;
-    };
+    return () => subscription.unsubscribe();
+}, []);
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        setUser(null);
-    };
+const login = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
 
-    return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    if (error) throw error;
+    return data;
 };
+
+const register = async (name, email, password) => {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: name,
+            },
+        },
+    });
+
+    if (error) throw error;
+    return data;
+};
+
+const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setUser(null);
+};
+
+return (
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        {children}
+    </AuthContext.Provider>
+);
 
 export const useAuth = () => {
     const context = React.useContext(AuthContext);

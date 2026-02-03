@@ -26,10 +26,20 @@ const sendEmail = async (options) => {
         transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
+            secure: false, // true for 465, false for other ports
             auth: {
                 user: process.env.SMTP_EMAIL,
                 pass: process.env.SMTP_PASSWORD
-            }
+            },
+            tls: {
+                rejectUnauthorized: false
+            },
+            // Prevent hanging
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000,
+            socketTimeout: 10000,
+            logger: true,
+            debug: true
         });
     } else {
         // Create Ethereal Account

@@ -23,24 +23,26 @@ const sendEmail = async (options) => {
     let transporter;
 
     if (process.env.SMTP_HOST && process.env.SMTP_EMAIL) {
-        // Use Port 465 (SSL) for Gmail reliability on Cloud
-        const isGmail = process.env.SMTP_HOST.includes('gmail');
 
-        console.log(`[EMAIL SETUP] Host: ${process.env.SMTP_HOST}, Port: ${isGmail ? 465 : process.env.SMTP_PORT}, User: ${process.env.SMTP_EMAIL}`);
+        console.log(`[EMAIL SETUP] Host: ${process.env.SMTP_HOST}, Port: ${process.env.SMTP_PORT}, User: ${process.env.SMTP_EMAIL}`);
+
+        const port = parseInt(process.env.SMTP_PORT, 10);
 
         transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: isGmail ? 465 : process.env.SMTP_PORT,
-            secure: isGmail ? true : false, // true for 465, false for other ports
+            port: port,
+            secure: port === 465, // True for 465, false for other ports
             auth: {
                 user: process.env.SMTP_EMAIL,
                 pass: process.env.SMTP_PASSWORD
             },
+            // Improved TLS settings for Cloud Hosting
             tls: {
-                rejectUnauthorized: false
+                rejectUnauthorized: false,
+                ciphers: 'SSLv3'
             },
             // Prevent hanging
-            connectionTimeout: 10000, // 10 seconds
+            connectionTimeout: 10000,
             greetingTimeout: 10000,
             socketTimeout: 10000,
             logger: true,

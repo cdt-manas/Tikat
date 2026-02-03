@@ -42,11 +42,20 @@ exports.register = async (req, res, next) => {
         const message = `Welcome to Tikat! Your OTP for email verification is: ${otp}\n\nThis OTP will expire in 10 minutes.`;
 
         try {
-            await sendEmail({
-                email: user.email,
-                subject: 'Tikat - Email Verification OTP',
-                message
-            });
+            // Create a timeout promise that rejects after 8 seconds
+            const emailTimeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Email sending timed out')), 8000)
+            );
+
+            // Race the sendEmail function against the timeout
+            await Promise.race([
+                sendEmail({
+                    email: user.email,
+                    subject: 'Tikat - Email Verification OTP',
+                    message
+                }),
+                emailTimeout
+            ]);
 
             res.status(201).json({
                 success: true,
@@ -55,10 +64,12 @@ exports.register = async (req, res, next) => {
             });
         } catch (err) {
             console.error('Email error:', err);
-            // Even if email fails, allow user to request new OTP
+            // Even if email fails, return success so user isn't stuck.
+            // In a real production app, you might want to alert the user, 
+            // but for a smooth demo experience, we proceed.
             res.status(201).json({
                 success: true,
-                message: 'Registration successful. OTP sent (check server console in development).',
+                message: 'Registration successful. If you do not receive an email, please try "Resend OTP".',
                 email: user.email
             });
         }

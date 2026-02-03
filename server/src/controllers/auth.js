@@ -9,14 +9,30 @@ exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Create user (not verified yet)
-        const user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            isVerified: false
-        });
+        // Check if user exists
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // If user exists and is verified, return error
+            if (user.isVerified) {
+                const error = new Error('Duplicate field value entered. This email is already registered.');
+                error.statusCode = 400;
+                throw error;
+            }
+            // If user exists but NOT verified, just update the OTP and name/password if changed
+            user.name = name;
+            user.password = password; // Will be re-hashed by pre-save hook
+            // user.role = role; // Optional: update role
+        } else {
+            // Create new user (not verified yet)
+            user = await User.create({
+                name,
+                email,
+                password,
+                role,
+                isVerified: false
+            });
+        }
 
         // Generate OTP
         const otp = user.generateOTP();

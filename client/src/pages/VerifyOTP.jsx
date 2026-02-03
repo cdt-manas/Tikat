@@ -10,7 +10,6 @@ const VerifyOTP = () => {
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { login: authLogin } = useAuth();
 
     const email = location.state?.email || '';
 

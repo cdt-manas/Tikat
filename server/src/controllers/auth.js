@@ -41,6 +41,9 @@ exports.register = async (req, res, next) => {
         // Send OTP via email
         const message = `Welcome to Tikat! Your OTP for email verification is: ${otp}\n\nThis OTP will expire in 10 minutes.`;
 
+        // DEBUG LOG: Help in diagnosing delivery issues
+        console.log(`[OTP-DEBUG] Generated OTP for ${email}: ${otp}`);
+
         try {
             // Create a timeout promise that rejects after 8 seconds
             const emailTimeout = new Promise((_, reject) =>
@@ -203,16 +206,34 @@ exports.resendOTP = async (req, res, next) => {
         // Send OTP via email
         const message = `Your new OTP for email verification is: ${otp}\n\nThis OTP will expire in 10 minutes.`;
 
-        await sendEmail({
-            email: user.email,
-            subject: 'Tikat - New Verification OTP',
-            message
-        });
+        // DEBUG LOG
+        console.log(`[OTP-DEBUG] Resent OTP for ${email}: ${otp}`);
 
-        res.status(200).json({
-            success: true,
-            message: 'New OTP sent successfully'
-        });
+        try {
+            const emailTimeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Email sending timed out')), 8000)
+            );
+
+            await Promise.race([
+                sendEmail({
+                    email: user.email,
+                    subject: 'Tikat - New Verification OTP',
+                    message
+                }),
+                emailTimeout
+            ]);
+
+            res.status(200).json({
+                success: true,
+                message: 'New OTP sent successfully'
+            });
+        } catch (err) {
+            console.error('Email error:', err);
+            res.status(200).json({
+                success: true,
+                message: 'OTP generated. Check spam folder.',
+            });
+        }
     } catch (err) {
         next(err);
     }

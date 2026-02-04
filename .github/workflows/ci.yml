@@ -1,0 +1,63 @@
+name: Tikat CI
+
+# 1. TRIGGERS: Run this logic when...
+on:
+  push:
+    branches: [ "main" ]       # Code is pushed to main
+  pull_request:
+    branches: [ "main" ]       # Someone tries to merge into main
+
+# 2. JOBS: The tasks to perform (run in parallel)
+jobs:
+  # JOB 1: Test the Frontend
+  check-frontend:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./client  # Run commands inside 'client' folder
+
+    steps:
+    - name: Get Code 📥
+      uses: actions/checkout@v4
+
+    - name: Install Node.js 🟢
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+
+    - name: Install Dependencies 🔧
+      run: npm ci
+
+    - name: Build Project 🏗️
+      run: npm run build
+      # If this fails (e.g., syntax error), the CI turns RED ❌
+
+  # JOB 2: Test the Backend
+  check-backend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./server # Run commands inside 'server' folder
+
+    steps:
+    - name: Get Code 📥
+      uses: actions/checkout@v4
+
+    - name: Install Node.js 🟢
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install Dependencies 🔧
+      # We skip 'npm ci' if no lockfile exists in repo yet, but we committed it.
+      run: npm install 
+
+    # We don't have a build step for Express, but we can check if it parses:
+    - name: Verify Server Start (Dry Run) 🔎
+      run: node --check src/server.js

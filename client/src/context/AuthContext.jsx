@@ -9,36 +9,53 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check active session on load
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                // Fetch full profile from backend (MongoDB) to get role
-                api.get('/auth/me').then(res => {
-                    setUser({ ...session.user, ...res.data.data });
-                }).catch(() => {
-                    // Fallback if backend unreachable (e.g. local vs production mismatch)
-                    setUser(session.user);
-                }).finally(() => setLoading(false));
-            } else {
-                setUser(null);
-                setLoading(false);
-            }
-        });
-
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
+                // 1. SYNC TOKEN for Axios
+                localStorage.setItem('token', session.access_token);
+
+                // 2. Prepare User Object (Handle Name Fallback)
+                const baseUser = {
+                    ...session.user,
+                    name: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+                };
+
                 try {
                     const res = await api.get('/auth/me');
-                    setUser({ ...session.user, ...res.data.data });
+                    // Merge backend data (role, specific name) over base user
+                    setUser({ ...baseUser, ...res.data.data });
                 } catch (err) {
                     console.error('Failed to fetch user profile', err);
-                    setUser(session.user);
+                    setUser(baseUser);
                 }
             } else {
+                localStorage.removeItem('token'); // Clear token
                 setUser(null);
             }
             setLoading(false);
+        });
+
+        // Initial Load Check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                localStorage.setItem('token', session.access_token);
+                // Same logic for initial load
+                const baseUser = {
+                    ...session.user,
+                    name: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+                };
+
+                api.get('/auth/me').then(res => {
+                    setUser({ ...baseUser, ...res.data.data });
+                }).catch(() => {
+                    setUser(baseUser);
+                }).finally(() => setLoading(false));
+            } else {
+                localStorage.removeItem('token');
+                setUser(null);
+                setLoading(false);
+            }
         });
 
         return () => subscription.unsubscribe();

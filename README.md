@@ -8,7 +8,7 @@
 ## 🌐 Live Demo
 👉 **[Click here to visit Tikat Live](https://tikat-tau.vercel.app/)**
 
-🎬 Demo Video
+## 🎬 Demo Video
 A complete walkthrough of Tikat showcasing movie discovery, seat selection, booking flow, and Stripe payment integration.
 👉 **[Click here to visit demo of Tikat](https://youtu.be/40qAP-zBiug)**
 

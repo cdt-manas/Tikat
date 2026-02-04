@@ -10,7 +10,7 @@
 
 ## 🎬 Demo Video
 A complete walkthrough of Tikat showcasing movie discovery, seat selection, booking flow, and Stripe payment integration.
-👉 **[Click here to visit demo of Tikat](https://youtu.be/40qAP-zBiug)**
+👉 **[Click here to visit demo of Tikat](https://youtu.be/lyx3RLwGFIs)**
 
 ---
 

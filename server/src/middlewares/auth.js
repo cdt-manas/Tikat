@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // Protect routes
+// Protect routes
 exports.protect = async (req, res, next) => {
     let token;
 
@@ -9,28 +10,51 @@ exports.protect = async (req, res, next) => {
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer')
     ) {
-        // Set token from Bearer token in header
         token = req.headers.authorization.split(' ')[1];
     }
 
-    // Make sure token exists
     if (!token) {
-        const error = new Error('Not authorized to access this route');
-        error.statusCode = 401;
-        return next(error);
+        return next({
+            message: 'Not authorized to access this route',
+            statusCode: 401
+        });
     }
 
     try {
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // 1. Verify Token with Supabase
+        const { data: { user: supabaseUser }, error } = await require('../config/supabase').auth.getUser(token);
 
-        req.user = await User.findById(decoded.id);
+        if (error || !supabaseUser) {
+            return next({
+                message: 'Invalid token (Supabase)',
+                statusCode: 401
+            });
+        }
 
+        // 2. Sync with MongoDB (Lazy Load)
+        // Check if user exists in our DB
+        let user = await User.findOne({ email: supabaseUser.email });
+
+        if (!user) {
+            // Create user if not exists (First time login)
+            user = await User.create({
+                name: supabaseUser.user_metadata.full_name || 'User',
+                email: supabaseUser.email,
+                password: 'linked_with_supabase_' + Date.now(), // Dummy password
+                isVerified: true // Supabase handles verification
+            });
+        }
+
+        // 3. Attach User to Request
+        req.user = user;
         next();
+
     } catch (err) {
-        const error = new Error('Not authorized to access this route');
-        error.statusCode = 401;
-        return next(error);
+        console.error('Auth Middleware Error:', err);
+        return next({
+            message: 'Not authorized',
+            statusCode: 401
+        });
     }
 };
 

@@ -88,10 +88,10 @@ const VerifyOTP = () => {
                     <input
                         type="text"
                         className="form-control"
-                        placeholder="Enter 6-digit code"
+                        placeholder="Enter 6-8 digit code"
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        maxLength="6"
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                        maxLength="8"
                         required
                         style={{
                             textAlign: 'center',
@@ -101,20 +101,20 @@ const VerifyOTP = () => {
                         }}
                     />
                     <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '8px' }}>
-                        {otp.length}/6 digits entered
+                        {otp.length}/8 digits entered
                     </small>
                 </div>
 
                 <button
                     type="submit"
                     className="btn btn-block"
-                    disabled={loading || otp.length !== 6}
+                    disabled={loading || otp.length < 6}
                     style={{
-                        opacity: (loading || otp.length !== 6) ? 0.5 : 1,
-                        cursor: (loading || otp.length !== 6) ? 'not-allowed' : 'pointer'
+                        opacity: (loading || otp.length < 6) ? 0.5 : 1,
+                        cursor: (loading || otp.length < 6) ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {loading ? 'Verifying...' : otp.length === 6 ? 'Verify OTP ✓' : 'Enter 6-Digit OTP'}
+                    {loading ? 'Verifying...' : otp.length >= 6 ? 'Verify OTP ✓' : 'Enter OTP'}
                 </button>
             </form>
 

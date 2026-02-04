@@ -22,11 +22,16 @@ export const AuthProvider = ({ children }) => {
                 };
 
                 try {
+                    console.log('Fetching full profile from /api/auth/me...');
                     const res = await api.get('/auth/me');
-                    // Merge backend data (role, specific name) over base user
-                    setUser({ ...baseUser, ...res.data.data });
+                    console.log('Backend Profile:', res.data.data);
+
+                    const fullUser = { ...baseUser, ...res.data.data };
+                    console.log('Merged User Object:', fullUser);
+
+                    setUser(fullUser);
                 } catch (err) {
-                    console.error('Failed to fetch user profile', err);
+                    console.error('Failed to fetch user profile:', err);
                     setUser(baseUser);
                 }
             } else {

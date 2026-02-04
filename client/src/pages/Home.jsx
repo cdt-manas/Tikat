@@ -33,13 +33,15 @@ const Home = () => {
 
     // Filter movies when language or date changes
     useEffect(() => {
+        console.log(`Filtering - Language: ${selectedLanguage}, Date: ${selectedDate}`);
         const fetchByDate = async () => {
             // If All Dates, just rely on allMovies
             if (selectedDate === 'All') {
                 let filtered = [...allMovies];
                 if (selectedLanguage !== 'All') {
-                    filtered = filtered.filter(movie => movie.language === selectedLanguage);
+                    filtered = filtered.filter(movie => movie.language?.trim() === selectedLanguage);
                 }
+                console.log(`Filtered count: ${filtered.length}`);
                 setMovies(filtered);
                 return;
             }
@@ -60,8 +62,9 @@ const Home = () => {
                 let filtered = allMovies.filter(m => movieIds.includes(m._id));
 
                 if (selectedLanguage !== 'All') {
-                    filtered = filtered.filter(movie => movie.language === selectedLanguage);
+                    filtered = filtered.filter(movie => movie.language?.trim() === selectedLanguage);
                 }
+                console.log(`Filtered count (with date): ${filtered.length}`);
                 setMovies(filtered);
 
             } catch (err) {
@@ -98,8 +101,8 @@ const Home = () => {
         }
     };
 
-    // Get unique languages
-    const languages = ['All', ...new Set(allMovies.map(m => m.language))];
+    // Get unique languages (Robust)
+    const languages = ['All', ...new Set(allMovies.map(m => m.language).filter(Boolean).map(l => l.trim()))];
 
     if (loading) return <div className="container" style={{ paddingTop: '80px', textAlign: 'center' }}>Loading...</div>;
     if (error) return <div className="container" style={{ paddingTop: '80px', color: '#e50914' }}>{error}</div>;

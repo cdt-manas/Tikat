@@ -11,13 +11,33 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         // Check active session on load
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
+            if (session?.user) {
+                // Fetch full profile from backend (MongoDB) to get role
+                api.get('/auth/me').then(res => {
+                    setUser({ ...session.user, ...res.data.data });
+                }).catch(() => {
+                    // Fallback if backend unreachable (e.g. local vs production mismatch)
+                    setUser(session.user);
+                }).finally(() => setLoading(false));
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
         });
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user) {
+                try {
+                    const res = await api.get('/auth/me');
+                    setUser({ ...session.user, ...res.data.data });
+                } catch (err) {
+                    console.error('Failed to fetch user profile', err);
+                    setUser(session.user);
+                }
+            } else {
+                setUser(null);
+            }
             setLoading(false);
         });
 
